@@ -1,5 +1,6 @@
+import matplotlib.pyplot as plt
 
-# todo - nastavit tym filtrom, ktore maju iba jeden vystup, aby bol poslany do vsetkych vychadzajucich pipeov
+
 class Filter:
     def __init__(self, ingoing, outgoing):
         self.ingoing = ingoing
@@ -21,6 +22,9 @@ class Filter:
     def set_time(self, time):
         self.time = time
 
+    def end(self):
+        pass
+
 
 class Addition(Filter):
     value = 0
@@ -39,10 +43,11 @@ class Subtraction(Filter):
     value = 0
 
     def apply_function(self):
-        self.value = self.ingoing[0] - self.ingoing[1]
+        self.value = self.ingoing[0].get() - self.ingoing[1].get()
 
     def sent_values(self):
-        self.outgoing[0].set(self.value)
+        for pipe in self.outgoing:
+            pipe.set(self.value)
 
 
 class Multiplication(Filter):
@@ -54,7 +59,8 @@ class Multiplication(Filter):
             self.value *= pipe.get()
 
     def sent_values(self):
-        self.outgoing[0].set(self.value)
+        for pipe in self.outgoing:
+            pipe.set(self.value)
 
 
 class Division(Filter):
@@ -64,7 +70,8 @@ class Division(Filter):
         self.value = self.ingoing[0] / self.ingoing[1]
 
     def sent_values(self):
-        self.outgoing[0].set(self.value)
+        for pipe in self.outgoing:
+            pipe.set(self.value)
 
 
 class Derivative(Filter):
@@ -83,7 +90,8 @@ class Derivative(Filter):
         self.previous_value = self.ingoing[0].get()
 
     def sent_values(self):
-        self.outgoing[0].set(self.value)
+        for pipe in self.outgoing:
+            pipe.set(self.value)
 
 
 class Integral(Filter):
@@ -99,7 +107,8 @@ class Integral(Filter):
         self.value += self.ingoing[0] * self.step
 
     def sent_values(self):
-        self.outgoing[0].set(self.value)
+        for pipe in self.outgoing:
+            pipe.set(self.value)
 
 
 class Constant(Filter):
@@ -138,12 +147,39 @@ class Impulse(Filter):
 
 
 class Scope(Filter):
+    def __init__(self, ingoing, outgoing, name='', visualise=True,):
+        super().__init__(ingoing, outgoing)
+        self.visualise = visualise
+        self.values = []
+        for _ in range(len(ingoing)):
+            self.values.append([])
+        self.xs = []
+        self.name = name
+
     def apply_function(self):
-        line = ''
-        for pipe in self.ingoing:
-            line = line + str(pipe.get())
-        print(line)
-        # todo - dat tu plot
+        self.xs.append(self.time)
+        for i in range(0, len(self.ingoing)):
+            self.values[i].append(self.ingoing[i].get())
+
+    def end(self):
+        if self.visualise:
+            for i in range(0, len(self.ingoing)):
+                plt.plot(self.xs, self.values[i], label=self.ingoing[i].name)
+            plt.title(self.name)
+            plt.legend()
+            plt.show()
 
 
+class Gain(Filter):
+    def __init__(self, ingoing, outgoing, gain=1):
+        super().__init__(ingoing, outgoing)
+        self.value = 0
+        self.gain = gain
 
+    def apply_function(self):
+        self.value = self.ingoing[0] * self.gain
+
+    def sent_values(self):
+        self.apply_function()
+        for pipe in self.outgoing:
+            pipe.set(self.value)

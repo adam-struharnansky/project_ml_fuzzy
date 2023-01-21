@@ -22,4 +22,5 @@ class SimpleEnvironment:
             for f in self.filters:
                 f.sent_values()
             current_step += step
-
+        for f in self.filters:
+            f.end()
