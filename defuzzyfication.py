@@ -11,12 +11,13 @@ class Defuzzify(Filter):
         self.value = 0
         self.edges = [0, 0]
         for membership_function in membership_functions:
-            minimum, maximum = membership_function.edge()
+            minimum, maximum = membership_function.edges()
             self.edges[0] = min(self.edges[0], minimum)
             self.edges[1] = max(self.edges[1], maximum)
 
     def apply_function(self):
-        if self.type == 'bisector': # todo optimize
+        if self.type == 'bisector':  # todo optimize
+            # todo - toto je zle!
             integral = 0
             dx = (self.edges[1] - self.edges[0]) / self.steps
             for step in range(0, self.steps):

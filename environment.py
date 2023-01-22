@@ -2,7 +2,6 @@
 
 class SimpleEnvironment:
     def __init__(self, filters):
-        print('here')
         self.filters = filters
 
     def add_filter(self, new_filter):

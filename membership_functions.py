@@ -12,7 +12,7 @@ class MembershipFunction:
 
 
 class TriangleMF(MembershipFunction):
-    def __int__(self, left, middle, right):
+    def __init__(self, left, middle, right):
         super().__init__()
         self.left = left
         self.middle = middle

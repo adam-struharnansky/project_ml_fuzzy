@@ -1,25 +1,39 @@
 from filter import Filter
 
 
-# todo - treba pridat agregacnu metodu
 class FuzzyRules(Filter):
-    def __init__(self, ingoing, outgoing, rules):
+    def __init__(self, ingoing, outgoing, rules, outgoing_names, aggregation_method='max'):
         super().__init__(ingoing, outgoing)
         self.rules = rules
-        self.values = []
+        self.values = [0] * len(outgoing_names)
+        self.names = outgoing_names
         self.type = type
+        self.aggregation_method = aggregation_method
+
+    def add_rule(self, rule):
+        self.rules.append(Rule(rule))
+
+    def clear_rules(self):
+        self.rules = []
 
     def apply_function(self):
+        for i in range(0, len(self.values)):
+            self.values[i] = 0
+
         dictionary = []
         for pipe in self.ingoing:
             for membership in pipe.get():
                 dictionary.append([pipe.name, membership[0], membership[1]])
 
         for rule in self.rules:
-            result = rule.apply(dictionary)
+            result = rule.apply_rule(dictionary)
+            for i in range(0, len(self.names)):
+                if self.names[i] == result[1]:
+                    self.values[i] = self.aggregate(self.values[i], result[2])
 
-            # todo - ako toto funguje, ako spojit viacere pravidla, to treba zistit - asi podla agregacnej funkcie
-        pass
+    def aggregate(self, a, b):
+        if self.aggregation_method == 'max':
+            return max(a, b)
 
     def sent_values(self):
         for pipe in self.outgoing:
@@ -30,7 +44,7 @@ class Rule:
     def __init__(self, text, function_type=''):
         self.left_variables = []
         self.left_values = []
-        self.right_variable = '' # todo pre viac outputov
+        self.right_variable = ''  # todo pre viac outputov
         self.right_value = ''
         if 'AND' in text:
             self.function = min_and
@@ -49,8 +63,6 @@ class Rule:
                     self.left_values.append(parts[i + 1])
             if parts[i] == 'then' or parts[i] == 'THEN':
                 then_occurred = True
-
-        print(self.left_variables, self.left_values, self.right_variable, self.right_value)
 
     def set_function(self, function_type):
         if function_type == 'product_and':

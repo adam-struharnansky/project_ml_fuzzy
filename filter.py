@@ -77,17 +77,20 @@ class Division(Filter):
 class Derivative(Filter):
     value = 0
 
-    def __init__(self, ingoing, outgoing, step=0.1, initial_value=0):
+    def __init__(self, ingoing, outgoing, step=0.1, initial_x=0, min_result=-1000, max_result=1000):
         super().__init__(ingoing, outgoing)
         if step == 0:
             self.step = 0.1
         else:
             self.step = step
-        self.previous_value = initial_value
+        self.previous_x = initial_x
+        self.min_result = min_result
+        self.max_result = max_result
 
     def apply_function(self):
-        self.value = (self.previous_value - self.ingoing[0].get()) / self.step
-        self.previous_value = self.ingoing[0].get()
+        tmp = (self.ingoing[0].get() - self.previous_x) / self.step
+        self.value = max(self.min_result, min(self.max_result, tmp))
+        self.previous_x = self.ingoing[0].get()
 
     def sent_values(self):
         for pipe in self.outgoing:
@@ -104,7 +107,7 @@ class Integral(Filter):
         self.value = initial_value
 
     def apply_function(self):
-        self.value += self.ingoing[0] * self.step
+        self.value += self.ingoing[0].get() * self.step
 
     def sent_values(self):
         for pipe in self.outgoing:
@@ -162,6 +165,7 @@ class Scope(Filter):
             self.values[i].append(self.ingoing[i].get())
 
     def end(self):
+        print('scope values', self.values[0])
         if self.visualise:
             for i in range(0, len(self.ingoing)):
                 plt.plot(self.xs, self.values[i], label=self.ingoing[i].name)
@@ -177,7 +181,7 @@ class Gain(Filter):
         self.gain = gain
 
     def apply_function(self):
-        self.value = self.ingoing[0] * self.gain
+        self.value = self.ingoing[0].get() * self.gain
 
     def sent_values(self):
         self.apply_function()
